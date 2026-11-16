@@ -324,6 +324,22 @@ html.rose ::selection{background:rgba(255,79,154,.35)}
 .pbias.up{background:var(--gbg);color:var(--g)}.pbias.down{background:var(--rbg);color:var(--r)}
 .pov{position:fixed;inset:0;z-index:46;background:rgba(0,0,0,.55);display:none;align-items:flex-end;justify-content:center}
 .pov.on{display:flex}
+.mrow{display:flex;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
+.mrow:last-child{border-bottom:0}
+.mrow.dup{opacity:.55}
+.mrow input[type=checkbox]{width:20px;height:20px;margin-top:2px;accent-color:var(--acc);flex:none}
+.mrow .mm{flex:1;min-width:0}
+.mrow .mt{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;font-size:15px}
+.mrow .mt .num{margin-left:auto;font-weight:700}
+.mrow .ms{font-size:12px;color:var(--mut);margin-top:3px}
+.mrow .mw{font-size:12px;color:var(--r);margin-top:3px}
+.mrow .mtag{font-size:11px;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--mut)}
+.mrow .msl{display:flex;gap:8px;align-items:center;margin-top:8px}
+.mrow .msl input{width:120px;padding:8px 10px;font-size:14px;margin:0}
+.mrow .msl span{font-size:12px;color:var(--mut)}
+.sideL{color:var(--g);font-weight:700}.sideS{color:var(--r);font-weight:700}
+#m-drop{border:1.5px dashed var(--line);border-radius:14px;padding:14px;text-align:center;margin-top:12px}
+#m-drop.over{border-color:var(--acc)}
 .pov .box{background:var(--bg);width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:18px 16px calc(16px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto}
 .seg.three{display:grid;grid-template-columns:repeat(3,1fr)}
 .seg.three button.on{background:var(--line);color:var(--text)}
@@ -637,6 +653,17 @@ html.rose .cbar .cfl.p{background:linear-gradient(90deg,#3fbf8a,#6fe0b0)}html.ro
       <div class="pm" style="margin-top:12px"><input id="tf-new" placeholder="เพิ่ม เช่น M3, H2" style="text-transform:uppercase"><button type="button" id="tf-add" style="width:72px;font-size:15px">เพิ่ม</button></div>
     </div>
     <div class="card">
+      <h3>นำเข้าจากรูป MT5</h3>
+      <label>เวลา MT5 ห่างจากเวลาไทยกี่ชั่วโมง</label>
+      <input id="mt5-off" type="number" step="1" inputmode="numeric" placeholder="7">
+      <div class="hint">เวลาไทย = เวลาใน MT5 + ค่านี้ · เทียบเวลาบนสุดในหน้า Quotes ของ MT5 กับนาฬิกามือถือ</div>
+      <label>Gemini API key (ใช้ให้ AI อ่านรูป)</label>
+      <input id="mt5-key" type="password" autocomplete="off" spellcheck="false" placeholder="วาง key ที่นี่">
+      <div class="hint">สร้างฟรีได้ที่ <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:var(--acc)">aistudio.google.com/apikey</a> · key เก็บไว้ในเครื่องนี้เท่านั้น ไม่ซิงก์ข้ามเครื่อง ต้องใส่แยกทั้งคอมและมือถือ</div>
+      <div class="hint" id="mt5-demo" style="display:none;color:var(--acc)">ในเดโม่นี้ใช้ AI ของ Claude อ่านรูปให้ ไม่ต้องใส่ key</div>
+      <button class="btn s" id="mt5-save">บันทึก</button>
+    </div>
+    <div class="card">
       <h3>สำรองข้อมูล</h3>
       <div class="lbl">เก็บทุกอย่างไว้ในไฟล์เดียว · เทรด ฝากถอน แผน กฎ บทเรียน และตั้งค่า</div>
       <label class="pin" style="margin:10px 0 0"><input type="checkbox" id="bk-shots" checked> รวมรูปเทรดของออเดอร์สำคัญ</label>
@@ -688,6 +715,7 @@ html.rose .cbar .cfl.p{background:linear-gradient(90deg,#3fbf8a,#6fe0b0)}html.ro
       <div class="confirm" id="c-confirm"><button type="button" class="btn s" id="c-no">ยกเลิก</button><button type="button" class="btn d" id="c-yes" style="background:var(--r);color:#fff">ยืนยันลบ</button></div>
     </form>
     <form id="form" autocomplete="off">
+      <button type="button" class="btn s" id="f-mt5" style="margin:0 0 6px">📷 กรอกจากรูปประวัติ MT5</button>
       <div class="remind" id="f-remind"></div>
       <label>สินทรัพย์</label>
       <div class="chips" id="f-syms"></div>
@@ -786,6 +814,18 @@ html.rose .cbar .cfl.p{background:linear-gradient(90deg,#3fbf8a,#6fe0b0)}html.ro
   <textarea id="p-note" rows="2" placeholder="วันนี้ทำตามแผนไหม อะไรที่มองพลาด"></textarea>
   <button class="btn p" type="button" id="p-save">บันทึกแผน</button>
   <button class="btn d" type="button" id="p-del" style="display:none">ลบแผนนี้</button>
+</div></div>
+<div class="pov" id="mov"><div class="box" id="m-box">
+  <div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">กรอกจากรูป MT5</h3><button type="button" id="m-x" style="background:none;border:0;color:var(--mut);font-size:26px;line-height:1">×</button></div>
+  <div class="hint" id="m-off"></div>
+  <div id="m-drop">
+    <input type="file" id="m-file" accept="image/*" multiple style="display:none">
+    <button type="button" class="btn s" id="m-pick" style="margin:0">เลือกรูปประวัติ (หลายรูปได้)</button>
+    <div class="hint" id="m-droph">แคปหน้า History ใน MT5 · บนคอมลากรูปมาวาง หรือกด Ctrl+V ได้</div>
+  </div>
+  <div class="hint" id="m-status"></div>
+  <div id="m-list"></div>
+  <button class="btn p" type="button" id="m-save" style="display:none">บันทึก</button>
 </div></div>
 <div class="picfs" id="picfs"><img id="picfs-img" alt=""><div class="cap">แตะที่ไหนก็ได้เพื่อปิด</div></div>
 <div class="stopov" id="stopov"><div class="box">
@@ -1350,6 +1390,7 @@ function renderSettings(){
   $('#tf-list').innerHTML = (settings.tfs||[]).map(s=>`<button type="button" class="chip symchip" data-v="${esc(s)}">${esc(s)}<i>×</i></button>`).join('') || '<span class="lbl">ยังไม่มี เพิ่มด้านล่าง</span>';
   if(document.activeElement!==$('#cur')) $('#cur').value=settings.cur;
   if(document.activeElement!==$('#start')) $('#start').value=settings.start??'';
+  if(document.activeElement!==$('#mt5-off')) $('#mt5-off').value=settings.mt5Off??7;
 }
 
 /* ---------- form ---------- */
@@ -1440,7 +1481,7 @@ function openForm(t){
   setups=t?getSetups(t):[]; broken=[...(t?.broken||[])]; tf=t?(t.tf||''):(settings.lastTf||'');
   $('#f-star').checked=!!t?.star; fShots=[]; fShotsDel=[]; renderShots(); if(t?.shots) loadShots(t.id).then(a=>{if(editing&&editing.id===t.id){fShots=a;renderShots();}});
   emo=t?.emo||''; setRmode(t?(t.rmode||(am!=null?'amt':'r')):(settings.lastRmode||'r')); setSide(t?.side||'L'); setPlan(t?.plan||'y'); chips(); preview();
-  $('#f-del').style.display=t?'block':'none'; $('#f-confirm').classList.remove('on');
+  $('#f-del').style.display=t?'block':'none'; $('#f-mt5').style.display=t?'none':'block'; $('#f-confirm').classList.remove('on');
   $('#tabs').style.display=t?'none':'flex'; showTab('trade');
   $('#sheet').classList.add('on'); $('#sheet .in').scrollTop=0;
 }
@@ -1983,6 +2024,149 @@ async function cleanupOld(){
   if(cleaned) return; cleaned=true;
   for(const t of trades.filter(t=>'obs' in t||'obsAt' in t)){ const u=Object.assign({},t); delete u.obs; delete u.obsAt; await saveTrade(u); }
 }
+
+/* ---------- กรอกจากรูป MT5 ---------- */
+const MT5_PROMPT=`You are reading a screenshot of MetaTrader 5 trade history (closed positions). It may be the mobile app list (each row: "SYMBOL buy|sell LOT", "openPrice → closePrice", profit, close time "YYYY.MM.DD HH:MM:SS") or the desktop History table (columns like Time, Position, Symbol, Type, Volume, Price, S/L, T/P, Time, Price, Commission, Swap, Profit).
+Extract EVERY closed position row that is fully visible. Skip rows cut off at the top or bottom edge or hidden behind buttons/menus, and skip summary lines (Deposit, Withdrawal, Profit, Credit, Swap, Commission, Balance) and balance/deposit operations.
+Copy numbers exactly as displayed (keep all decimals). Profit is negative if shown with a minus sign or in red.
+Return ONLY JSON, no other text:
+{"rows":[{"sym":"XAUUSD","side":"buy","lot":0.01,"open":3871.891,"close":3874.426,"profit":2.54,"time":"2026.11.16 01:39:14","openTime":null,"sl":null,"tp":null}]}
+"time" = close time. "openTime","sl","tp" only if visible on screen (desktop table), else null. If nothing found return {"rows":[]}.`;
+let mGroups=[], mBusy=false, sampleNS;
+const mOff=()=>{const v=n(settings.mt5Off);return v==null?7:v;};
+const gKey=()=>{try{return localStorage.getItem('tj_gkey')||''}catch(e){return ''}};
+async function getSample(){
+  if(sampleNS!==undefined) return sampleNS;
+  try{ const s=window.claude?.use?await window.claude.use('sample'):null; let ok=!!s;
+    if(s&&s.limits){ try{ ok=!!(await s.limits())?.images; }catch(e){} }
+    sampleNS=ok?s:null; }catch(e){ sampleNS=null; }
+  return sampleNS;
+}
+function blobB64(b){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=rej;r.readAsDataURL(b);});}
+async function mShrink(f){ // ย่อให้ AI อ่านได้ชัดแต่ไม่ใหญ่เกิน
+  const d=await shrink(f,2200,2600000,.9); const r=await fetch(d); return r.blob(); }
+async function geminiRead(key,blob){
+  const body={contents:[{parts:[{text:MT5_PROMPT},{inline_data:{mime_type:blob.type||'image/jpeg',data:await blobB64(blob)}}]}],generationConfig:{temperature:0,responseMimeType:'application/json'}};
+  let last=0;
+  for(const m of ['gemini-flash-latest','gemini-2.5-flash','gemini-flash-lite-latest','gemini-2.0-flash']){
+    let r; try{ r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify(body)}); }
+    catch(e){ const er=new Error('net'); er.code='net'; throw er; }
+    if(r.ok){ const j=await r.json(); return (j.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join(''); }
+    last=r.status;
+    if(r.status===400||r.status===401||r.status===403){ const j=await r.json().catch(()=>({})); const msg=j.error?.message||''; if(!/model|not found|not supported/i.test(msg)){ const er=new Error(msg); er.code='badkey'; throw er; } }
+  }
+  const er=new Error('gemini '+last); er.code=last===429?'quota':'fail'; throw er;
+}
+function parseRows(txt){
+  let t=String(txt||'').replace(/```(json)?/gi,''); const a=t.indexOf('{'), b=t.lastIndexOf('}');
+  let o; try{ o=JSON.parse(t.slice(a,b+1)); }catch(e){ const i=t.indexOf('['), j=t.lastIndexOf(']'); try{ o={rows:JSON.parse(t.slice(i,j+1))}; }catch(e2){ return []; } }
+  const num=v=>{ if(v==null||v==='')return null; const x=+String(v).replace(/[\s,]/g,'').replace(/[−–]/g,'-'); return isNaN(x)?null:x; };
+  return (o.rows||o||[]).map(r=>({sym:String(r.sym||'').toUpperCase().trim(),side:/sell/i.test(r.side)?'S':'L',lot:num(r.lot),open:num(r.open),close:num(r.close),profit:num(r.profit),
+    time:String(r.time||'').trim(),openTime:r.openTime?String(r.openTime).trim():'',sl:num(r.sl)||null,tp:num(r.tp)||null}))
+    .filter(r=>r.sym&&r.lot>0&&r.open!=null&&r.close!=null&&r.profit!=null&&/^\d{4}[.\-/]\d{1,2}[.\-/]\d{1,2}\s+\d{1,2}:\d{2}/.test(r.time));
+}
+function mt5Thai(s){ // "2026.11.16 01:39:14" (เวลา MT5) → {date,time} เวลาไทย
+  const m=String(s||'').match(/(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?/); if(!m) return null;
+  const ms=Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+(m[6]||0))+mOff()*36e5, d=new Date(ms);
+  const p=x=>String(x).padStart(2,'0');
+  return {date:`${d.getUTCFullYear()}-${p(d.getUTCMonth()+1)}-${p(d.getUTCDate())}`,time:`${p(d.getUTCHours())}:${p(d.getUTCMinutes())}`,ms};
+}
+function mapSym(s){ const L=settings.symbols||[], u=s.replace(/[^A-Z0-9]/g,'');
+  return L.find(x=>x.toUpperCase()===u)||L.find(x=>u.startsWith(x.toUpperCase()))||(/XAU|GOLD/.test(u)?L.find(x=>/XAU|GOLD/i.test(x)):null)||u; }
+const isGold=s=>/XAU|GOLD/i.test(s);
+const rowKey=r=>[r.sym,r.side,r.lot,r.open,r.close,r.time].join('|');
+function buildGroups(perImg){
+  // รูปที่ซ้อนกันอาจมีไม้เดียวกัน → นับจำนวนสูงสุดที่เจอในรูปเดียว ไม่บวกซ้ำ
+  const cnt={}, sample={};
+  perImg.forEach(rows=>{ const c={}; rows.forEach(r=>{const k=rowKey(r); c[k]=(c[k]||0)+1; sample[k]=r;}); for(const k in c) cnt[k]=Math.max(cnt[k]||0,c[k]); });
+  const rows=[]; for(const k in cnt) for(let i=0;i<cnt[k];i++) rows.push(sample[k]);
+  const saved={}; trades.forEach(t=>(t.mt5?.keys||[]).forEach(k=>saved[k]=(saved[k]||0)+1));
+  const G={};
+  rows.forEach(r=>{ const k=r.sym+'|'+r.side+'|'+r.time; (G[k]=G[k]||[]).push(r); });
+  return Object.values(G).map(rs=>{
+    const lot=rs.reduce((a,r)=>a+r.lot,0), r0=rs[0], th=mt5Thai(r0.time);
+    const open=rs.reduce((a,r)=>a+r.open*r.lot,0)/lot, close=rs.reduce((a,r)=>a+r.close*r.lot,0)/lot, profit=+rs.reduce((a,r)=>a+r.profit,0).toFixed(2);
+    const keys=rs.map(rowKey), left={...saved}; let dup=true; keys.forEach(k=>{ if(left[k]>0) left[k]--; else dup=false; });
+    const sls=[...new Set(rs.map(r=>r.sl).filter(Boolean))], ots=rs.map(r=>r.openTime&&mt5Thai(r.openTime)).filter(Boolean).sort((a,b)=>a.ms-b.ms);
+    let warn=''; if(isGold(r0.sym)){ const exp=rs.reduce((a,r)=>a+(r.side==='S'?r.open-r.close:r.close-r.open)*r.lot*100,0); if(Math.abs(exp-profit)>Math.max(.6,Math.abs(profit)*.15)) warn=`กำไรไม่ตรงกับราคา (คำนวณได้ ${fmt(exp)}) · ตรวจตัวเลขอีกทีก่อนบันทึก`; }
+    return {sym:mapSym(r0.sym),raw:r0.sym,side:r0.side,lot:+lot.toFixed(2),open,close,profit,n:rs.length,keys,th,dup,warn,sl:sls.length===1?sls[0]:null,entry:ots[0]||null,on:!dup};
+  }).filter(g=>g.th).sort((a,b)=>a.th.ms-b.th.ms);
+}
+function gRisk(g){ return g.sl&&isGold(g.raw)?Math.abs(g.open-g.sl)*g.lot*100:null; }
+function renderMList(){
+  const el=$('#m-list'); const dp=v=>(+v).toFixed(3).replace(/0+$/,'').replace(/\.$/,'');
+  el.innerHTML=mGroups.map((g,i)=>{ const rk=gRisk(g), r=rk?g.profit/rk:null, [y,m,d]=g.th.date.split('-');
+    return `<div class="mrow${g.dup?' dup':''}" data-i="${i}"><input type="checkbox" data-f="on" ${g.on?'checked':''}><div class="mm">
+      <div class="mt"><b>${esc(g.sym)}</b><span class="side${g.side}">${g.side==='S'?'Sell':'Buy'}</span><span>${fLot(g.lot)} lot</span>${g.n>1?`<span class="mtag">รวม ${g.n} ไม้</span>`:''}${g.dup?'<span class="mtag">บันทึกแล้ว</span>':''}<span class="num ${cls(g.profit)}">${fmt(g.profit)}</span></div>
+      <div class="ms num">${dp(g.open)} → ${dp(g.close)} · ปิด ${+d} ${TH_MS[+m-1]} ${g.th.time}${g.entry?` · เข้า ${g.entry.time}`:''}</div>
+      ${g.warn?`<div class="mw">⚠ ${g.warn}</div>`:''}
+      <div class="msl"><input type="number" step="any" inputmode="decimal" data-f="sl" placeholder="ราคา SL" value="${g.sl??''}"><span>${rk?`เสี่ยง ${fmt(rk,false)} · <b class="${cls(r)}">${fR(r)}</b>`:(g.sl&&!isGold(g.raw)?'คิด R จาก SL ได้เฉพาะทอง':'ใส่ SL เพื่อคิด R')}</span></div>
+    </div></div>`; }).join('');
+  const k=mGroups.filter(g=>g.on).length; $('#m-save').style.display=mGroups.length?'block':'none';
+  $('#m-save').disabled=!k; $('#m-save').textContent=k?`บันทึก ${k} ไม้`:'เลือกไม้ที่จะบันทึก';
+}
+async function openMT5(){
+  closeForm(); mGroups=[]; renderMList(); $('#m-status').textContent='';
+  $('#m-off').textContent=`แปลงเวลา: เวลา MT5 ${mOff()>=0?'+':''}${mOff()} ชม. = เวลาไทย · แก้ได้ที่หน้าตั้งค่า`;
+  $('#mov').classList.add('on'); $('#m-box').scrollTop=0;
+}
+function closeMT5(){ if(mBusy)return; $('#mov').classList.remove('on'); }
+async function mt5Files(files){
+  files=[...files].filter(f=>f.type.startsWith('image/')); $('#m-file').value=''; if(!files.length||mBusy) return;
+  const sp=await getSample(), key=gKey();
+  if(!sp&&!key){ $('#m-status').innerHTML='<span style="color:var(--r)">ยังไม่ได้ใส่ Gemini API key</span> · ไปที่ตั้งค่า → นำเข้าจากรูป MT5'; fx('err'); return; }
+  mBusy=true; $('#m-pick').disabled=true; const per=[]; let err='';
+  for(const [i,f] of files.entries()){
+    $('#m-status').textContent=`AI กำลังอ่านรูป ${i+1}/${files.length}…`;
+    try{ const b=await mShrink(f); let txt;
+      if(sp){ const r=await sp(MT5_PROMPT,{images:[b],cache:false}); txt=r.text; }
+      else txt=await geminiRead(key,b);
+      per.push(parseRows(txt));
+    }catch(e){ err=e.code==='badkey'?'API key ใช้ไม่ได้ · ตรวจ key ในหน้าตั้งค่า':e.code==='quota'?'ใช้ AI ครบโควต้าแล้ว · ลองใหม่ภายหลัง':e.code==='net'?'เชื่อมต่อ AI ไม่ได้ · เช็คอินเทอร์เน็ต':e.code==='not_granted'?'ยังไม่ได้อนุญาตให้ใช้ AI':e.code==='rate_limited'?'เรียก AI ถี่เกินไป · รอสักครู่':'อ่านรูปไม่สำเร็จ ลองอีกครั้ง'; if(e.code==='badkey'||e.code==='not_granted')break; }
+  }
+  mBusy=false; $('#m-pick').disabled=false; $('#m-file').value='';
+  // รวมกับที่อ่านไว้แล้ว (เพิ่มรูปทีละรอบได้)
+  const prev=mGroups; mGroups=buildGroups([...(prev._per||[]),...per]); mGroups._per=[...(prev._per||[]),...per];
+  prev.forEach(o=>{ const g=mGroups.find(x=>x.keys.join()===o.keys.join()); if(g){ g.on=o.on; if(o.sl!=null)g.sl=o.sl; } });
+  renderMList();
+  const tot=mGroups.length, dup=mGroups.filter(g=>g.dup).length;
+  $('#m-status').innerHTML=(err?`<span style="color:var(--r)">${err}</span> · `:'')+(tot?`เจอ ${tot} ไม้${dup?` (บันทึกไปแล้ว ${dup})`:''} · ตรวจตัวเลขให้ตรงกับ MT5 ก่อนบันทึก`:(err?'':'ไม่เจอออเดอร์ในรูป ลองแคปหน้า History ให้เห็นรายการชัด ๆ'));
+  if(tot) fx('ok'); else if(err) fx('err');
+}
+$('#f-mt5').onclick=openMT5;
+$('#m-x').onclick=closeMT5;
+$('#mov').addEventListener('click',e=>{ if(e.target.id==='mov') closeMT5(); });
+$('#m-pick').onclick=()=>$('#m-file').click();
+$('#m-file').onchange=e=>mt5Files(e.target.files);
+const mDrop=$('#m-drop');
+mDrop.addEventListener('dragover',e=>{e.preventDefault();mDrop.classList.add('over')});
+mDrop.addEventListener('dragleave',()=>mDrop.classList.remove('over'));
+mDrop.addEventListener('drop',e=>{e.preventDefault();mDrop.classList.remove('over');mt5Files(e.dataTransfer.files)});
+document.addEventListener('paste',e=>{ if(!$('#mov').classList.contains('on'))return; const f=[...(e.clipboardData?.files||[])]; if(f.length){e.preventDefault();mt5Files(f);} });
+$('#m-list').addEventListener('change',e=>{ const row=e.target.closest('.mrow'); if(!row)return; const g=mGroups[+row.dataset.i];
+  if(e.target.dataset.f==='on'){ g.on=e.target.checked; renderMList(); } });
+$('#m-list').addEventListener('input',e=>{ if(e.target.dataset.f!=='sl')return; const row=e.target.closest('.mrow'), g=mGroups[+row.dataset.i];
+  g.sl=n(e.target.value); const rk=gRisk(g), r=rk?g.profit/rk:null;
+  row.querySelector('.msl span').innerHTML=rk?`เสี่ยง ${fmt(rk,false)} · <b class="${cls(r)}">${fR(r)}</b>`:(g.sl&&!isGold(g.raw)?'คิด R จาก SL ได้เฉพาะทอง':'ใส่ SL เพื่อคิด R'); });
+$('#m-save').onclick=async()=>{
+  const sel=mGroups.filter(g=>g.on); if(!sel.length)return;
+  const b=$('#m-save'); b.disabled=true; let ok=0;
+  for(const [i,g] of sel.entries()){
+    b.textContent=`กำลังบันทึก ${i+1}/${sel.length}…`;
+    const rk=gRisk(g), risk=rk?+rk.toFixed(2):null;
+    const t={id:'t'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),ts:g.th.ms,sym:g.sym,date:g.th.date,time:g.entry?.time||'',maxr:null,side:g.side,lot:g.lot,
+      risk,tgt:null,r:risk?+(g.profit/risk).toFixed(4):null,amt:g.profit,rmode:'amt',exits:null,emo:'',plan:'y',tf:'',setups:[],broken:[],note:'',star:false,shots:0,riskPct:null,
+      mt5:{keys:g.keys,n:g.n,open:+g.open.toFixed(3),close:+g.close.toFixed(3),sl:g.sl??null,closeAt:g.th.date+' '+g.th.time}};
+    if(await saveTrade(t)){ ok++; g.dup=true; g.on=false; }
+  }
+  b.disabled=false; renderMList();
+  if(ok){ fx('ok'); toast(`บันทึก ${ok} ไม้แล้ว · แตะที่ไม้ในรายการเพื่อใส่ Setup / TF เพิ่ม`); setTimeout(()=>{ $('#mov').classList.remove('on'); goView('list'); },600); }
+};
+$('#mt5-save').onclick=()=>{ const v=n($('#mt5-off').value); settings.mt5Off=v==null?7:Math.round(v);
+  const k=$('#mt5-key').value.trim(); try{ if(k) localStorage.setItem('tj_gkey',k); }catch(e){}
+  $('#mt5-key').value=''; $('#mt5-key').placeholder=gKey()?'มี key แล้ว · วางใหม่เพื่อเปลี่ยน':'วาง key ที่นี่'; saveSettings(); };
+$('#mt5-key').placeholder=gKey()?'มี key แล้ว · วางใหม่เพื่อเปลี่ยน':'วาง key ที่นี่';
+setTimeout(async()=>{ if(await getSample()) $('#mt5-demo').style.display='block'; },1500);
 let tt;function toast(m){if(/ไม่สำเร็จ|ไม่ได้|เต็ม|ก่อน$/.test(m))fx('err');const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),1800)}
 
 init();
